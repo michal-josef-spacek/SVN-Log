@@ -1,0 +1,17 @@
+--- #YAML:1.0
+name: SVN-Log
+version: 0.01
+license: perl
+distribution_type: module
+requires:
+  perl: 5.006
+recommends:
+  SVN::Core: 0
+build_requires:
+  Test::More: 0
+conflicts: {}
+provides:
+  SVN::Log:
+    file: lib/SVN/Log.pm
+    version: 0.01
+generated_by: Module::Build version 0.21

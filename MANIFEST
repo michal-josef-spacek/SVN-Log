@@ -1,0 +1,11 @@
+Build.PL
+CHANGES
+lib/SVN/Log.pm
+Makefile.PL
+MANIFEST
+MANIFEST.SKIP
+META.yml
+README
+t/01compile.t
+t/02basics.t
+t/03commandline.t

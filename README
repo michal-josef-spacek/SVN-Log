@@ -1,0 +1,78 @@
+NAME
+    SVN::Log - Extract change logs from a Subversion server.
+
+SYNOPSIS
+      use SVN::Log;
+
+      my $revs = SVN::Log::retrieve ("svn://host/repos", 1);
+
+      print Dumper ($revs);
+
+DESCRIPTION
+    SVN::Log retrieves and parses the commit logs from Subversion
+    repositories.
+
+VARIABLES
+  $FORCE_COMMAND_LINE_SVN
+    If this is true SVN::Log will use the command line svn client instead of
+    the subversion perl bindings when it needs to access the repository.
+
+FUNCTIONS
+  retrieve
+      retrieve ('svn://host/repos', $start_rev, $end_rev);
+
+    Retrieve one or more log messages from a repository. If a second
+    revision is not specified, the revision passed will be retrieved,
+    otherwise the range of revisions from $start_rev to $end_rev will be
+    retrieved.
+
+    The revisions are returned as a reference to an array of hashes. Each
+    hash contains the following keys:
+
+    revision
+        The number of the revision.
+
+    paths
+        A hashref indicating the paths modified by this revision.
+
+    author
+        The author of the revision.
+
+    date
+        The date of this revision.
+
+    message
+        The commit message from this revision.
+
+    Alternatively, you can pass retrieve a hash containing the repository,
+    start and end revisions, and a callback function which will be called
+    for each revision, like this:
+
+      retrieve ({ repository => "svn://svn.example.org/repos",
+                  start => 1,
+                  end => 2,
+                  callback => sub { print @_; } });
+
+    The callback will be passed a reference to a hash of paths modified, the
+    revision, the author, the date, and the message associated with the
+    revision.
+
+    See SVN::Log::Index for the cannonical example of how to do this.
+
+AUTHOR
+    Garrett Rooney, <rooneg@electricjellyfish.net>
+
+    Originally extracted from from SVN::Log::Index by Richard Clamp,
+    <richardc@unixbeard.net>
+
+COPYRIGHT
+    Copyright 2004 Garrett Rooney. All Rights Reserved.
+
+    Copyright 2004 Richard Clamp. All Rights Reserved.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
+SEE ALSO
+    SVN::Log::Index
+

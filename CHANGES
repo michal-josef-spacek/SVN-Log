@@ -1,0 +1,6 @@
+[ Changes for 0.01 - Jun 11, 2004 ]
+
+* Fixed bug in command line client log parsing that was causing us to skip
+  revisions in some cases.  Man that was stupid.
+* Extracted from SVN::Log::Index by Richard Clamp, then extensively modified 
+  by Garrett Rooney.
