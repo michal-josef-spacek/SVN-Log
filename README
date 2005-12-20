@@ -33,7 +33,12 @@ FUNCTIONS
         The number of the revision.
 
     paths
-        A hashref indicating the paths modified by this revision.
+        A hashref indicating the paths modified by this revision. Each key
+        is the name of the path modified in this revision. The value is an
+        "svn_log_changed_path_t" object from SVN::Core, which allows you to
+        determine what happened to this path. See the description of the
+        "action()", "copyfrom_path()", and "copyfrom_rev()" methods in
+        SVN::Core.
 
     author
         The author of the revision.
@@ -59,20 +64,30 @@ FUNCTIONS
 
     See SVN::Log::Index for the cannonical example of how to do this.
 
-AUTHOR
-    Garrett Rooney, <rooneg@electricjellyfish.net>
+SEE ALSO
+    SVN::Log::Index
 
+BUGS
+    Please report any bugs or feature requests to "bug-svn-log@rt.cpan.org",
+    or through the web interface at
+    <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=SVN-Log>. I will be
+    notified, and then you'll automatically be notified of progress on your
+    bug as I make changes.
+
+AUTHOR
+    The current maintainer is Nik Clayton, <nikc@cpan.org>.
+
+    The original author was Garrett Rooney, <rooneg@electricjellyfish.net>.
     Originally extracted from from SVN::Log::Index by Richard Clamp,
     <richardc@unixbeard.net>
 
 COPYRIGHT
+    Copyright 2005 Nik Clayton. All Rights Reserved.
+
     Copyright 2004 Garrett Rooney. All Rights Reserved.
 
     Copyright 2004 Richard Clamp. All Rights Reserved.
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
-
-SEE ALSO
-    SVN::Log::Index
 

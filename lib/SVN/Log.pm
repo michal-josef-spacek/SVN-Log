@@ -1,11 +1,11 @@
 package SVN::Log;
 
-# $Id: Log.pm 163 2004-06-12 13:53:25Z rooneg $
+# $Id: Log.pm 712 2005-12-20 12:25:33Z nik $
 
 use strict;
 use warnings;
 
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 =head1 NAME
 
@@ -27,7 +27,7 @@ SVN::Log retrieves and parses the commit logs from Subversion repositories.
 
 =head2 $FORCE_COMMAND_LINE_SVN
 
-If this is true SVN::Log will use the command line svn client instead of 
+If this is true SVN::Log will use the command line svn client instead of
 the subversion perl bindings when it needs to access the repository.
 
 =cut
@@ -40,11 +40,11 @@ our $FORCE_COMMAND_LINE_SVN = 0;
 
   retrieve ('svn://host/repos', $start_rev, $end_rev);
 
-Retrieve one or more log messages from a repository. If a second revision 
-is not specified, the revision passed will be retrieved, otherwise the range 
+Retrieve one or more log messages from a repository. If a second revision
+is not specified, the revision passed will be retrieved, otherwise the range
 of revisions from $start_rev to $end_rev will be retrieved.
 
-The revisions are returned as a reference to an array of hashes.  Each hash 
+The revisions are returned as a reference to an array of hashes.  Each hash
 contains the following keys:
 
 =over
@@ -55,7 +55,11 @@ The number of the revision.
 
 =item paths
 
-A hashref indicating the paths modified by this revision.
+A hashref indicating the paths modified by this revision.  Each key is the
+name of the path modified in this revision.  The value is an
+C<svn_log_changed_path_t> object from L<SVN::Core>, which allows you to
+determine what happened to this path.  See the description of the
+C<action()>, C<copyfrom_path()>, and C<copyfrom_rev()> methods in L<SVN::Core>.
 
 =item author
 
@@ -71,8 +75,8 @@ The commit message from this revision.
 
 =back
 
-Alternatively, you can pass retrieve a hash containing the repository, 
-start and end revisions, and a callback function which will be called for 
+Alternatively, you can pass retrieve a hash containing the repository,
+start and end revisions, and a callback function which will be called for
 each revision, like this:
 
   retrieve ({ repository => "svn://svn.example.org/repos",
@@ -80,7 +84,7 @@ each revision, like this:
               end => 2,
               callback => sub { print @_; } });
 
-The callback will be passed a reference to a hash of paths modified, the 
+The callback will be passed a reference to a hash of paths modified, the
 revision, the author, the date, and the message associated with the revision.
 
 See L<SVN::Log::Index> for the cannonical example of how to do this.
@@ -154,7 +158,7 @@ sub _do_log_bindings {
 
   my $r = SVN::Ra->new (url => $repos) or die "error opening RA layer: $!";
 
-  $r->get_log ([''], $start_rev, $end_rev, 1, 0,
+  $r->get_log ([''], $start_rev, $end_rev, 0, 1, 0,
                sub { $callback->(@_); });
 }
 
@@ -219,14 +223,29 @@ sub _handle_log {
 1;
 __END__
 
+=head1 SEE ALSO
+
+L<SVN::Log::Index>
+
+=head1 BUGS
+
+Please report any bugs or feature requests to
+C<bug-svn-log@rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=SVN-Log>.
+I will be notified, and then you'll automatically be notified of progress on
+your bug as I make changes.
+
 =head1 AUTHOR
 
-Garrett Rooney, <rooneg@electricjellyfish.net>
+The current maintainer is Nik Clayton, <nikc@cpan.org>.
 
+The original author was Garrett Rooney, <rooneg@electricjellyfish.net>.
 Originally extracted from from SVN::Log::Index by Richard Clamp,
 <richardc@unixbeard.net>
 
 =head1 COPYRIGHT
+
+Copyright 2005 Nik Clayton.  All Rights Reserved.
 
 Copyright 2004 Garrett Rooney.  All Rights Reserved.
 
@@ -234,9 +253,5 @@ Copyright 2004 Richard Clamp.  All Rights Reserved.
 
 This program is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.
-
-=head1 SEE ALSO
-
-L<SVN::Log::Index>
 
 =cut

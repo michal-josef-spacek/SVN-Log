@@ -1,6 +1,6 @@
 #!perl -w
 
-# $Id: 03commandline.t 158 2004-06-11 23:55:29Z rooneg $
+# $Id: 03commandline.t 588 2004-06-11 23:55:29Z rooneg $
 
 use Test::More tests => 8;
 

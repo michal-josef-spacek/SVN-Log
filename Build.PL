@@ -1,4 +1,4 @@
-# $Id: Build.PL 164 2004-06-12 13:53:49Z rooneg $
+# $Id: Build.PL 713 2005-12-20 12:25:46Z nik $
 
 use strict;
 
@@ -51,6 +51,7 @@ Module::Build->new(
   license => 'perl',
 
   create_readme => 1,
+  sign => 1,
 
   requires => {
     'perl' => 5.006,

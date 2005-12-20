@@ -1,4 +1,10 @@
-[ Changes for 0.01 - Jun 11, 2004 ]
+[ Changes for 0.02 - Dec 20, 2005 ]
+
+* Update to use the new svn_ra_get_log() API.
+
+* Maintainership handed to Nik Clayton.
+
+[ Changes for 0.01 - Jun 14, 2004 ]
 
 * Fixed bug in command line client log parsing that was causing us to skip
   revisions in some cases.  Man that was stupid.

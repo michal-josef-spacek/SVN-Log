@@ -1,8 +1,8 @@
 #!perl -w
 
-# $Id: 02basics.t 147 2004-06-11 19:34:53Z rooneg $
+# $Id: 02basics.t 708 2005-12-19 17:19:39Z nik $
 
-use Test::More tests => 8;
+use Test::More tests => 10;
 
 use strict;
 
@@ -31,7 +31,8 @@ $revs = SVN::Log::retrieve ($repospath, 2);
 
 is (scalar @{ $revs }, 1, "and now the second");
 
-is_deeply ($revs->[0]{paths}, { '/branches' => 1 }, "and the paths from 2");
+ok(exists $revs->[0]{paths}{'/branches'}, "  Shows that '/branches' changed");
+is($revs->[0]{paths}{'/branches'}->action(), 'A', '  and that it was an add');
 
 $revs = SVN::Log::retrieve ($repospath, 1, 2);
 
@@ -39,7 +40,8 @@ is (scalar @{ $revs }, 2, "got both back");
 
 like ($revs->[0]{message}, qr/a log message/, "1's log message is ok");
 
-is_deeply ($revs->[1]{paths}, { '/branches' => 1 }, "paths in 2 look right");
+ok(exists $revs->[1]{paths}{'/branches'}, "  Shows that '/branches' changed");
+is($revs->[1]{paths}{'/branches'}->action(), 'A', '  and that it was an add');
 
 my $count = 0;
 
