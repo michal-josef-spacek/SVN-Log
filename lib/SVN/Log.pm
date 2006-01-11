@@ -1,11 +1,11 @@
 package SVN::Log;
 
-# $Id: Log.pm 712 2005-12-20 12:25:33Z nik $
+# $Id: Log.pm 729 2006-01-11 08:20:09Z nik $
 
 use strict;
 use warnings;
 
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 =head1 NAME
 
@@ -38,11 +38,22 @@ our $FORCE_COMMAND_LINE_SVN = 0;
 
 =head2 retrieve
 
-  retrieve ('svn://host/repos', $start_rev, $end_rev);
+  retrieve('svn://host/repos', $start_rev, $end_rev);
 
 Retrieve one or more log messages from a repository. If a second revision
 is not specified, the revision passed will be retrieved, otherwise the range
 of revisions from $start_rev to $end_rev will be retrieved.
+
+One or both of $start_rev and $end_rev may be given as C<HEAD>, meaning
+the most recent (youngest) revision in the repository.  To retrieve all
+the log messages in the repository.
+
+  retrieve('svn://host/repos', 1, 'HEAD');
+
+To do the same thing, but retrieve the log messages in reverse order (i.e.,
+most recent log message first):
+
+  retrieve('svn://host/repos, 'HEAD', 1);
 
 The revisions are returned as a reference to an array of hashes.  Each hash
 contains the following keys:
@@ -56,14 +67,34 @@ The number of the revision.
 =item paths
 
 A hashref indicating the paths modified by this revision.  Each key is the
-name of the path modified in this revision.  The value is an
-C<svn_log_changed_path_t> object from L<SVN::Core>, which allows you to
-determine what happened to this path.  See the description of the
-C<action()>, C<copyfrom_path()>, and C<copyfrom_rev()> methods in L<SVN::Core>.
+name of the path modified in this revision.  The value is a reference to
+another hash, with the following possible keys.
+
+=over
+
+=item action
+
+The activity that happened to this path.  One of C<A>, C<M>, or C<D>, for
+C<Added>, C<Modified>, or C<Deleted> respectively.  This key is always
+present.
+
+=item copyfrom_path
+
+If the action was C<A> or C<M> then this path may have been copied from
+another path in the repository.  If it was then this key contains the path
+in the repository that the file was originally copied from.
+
+=item copyfrom_rev
+
+If C<copyfrom_path> is set then this value contains the revision that the
+path in C<copyfrom_path> was copied from.
+
+=back
 
 =item author
 
-The author of the revision.
+The author of the revision.  May legitimately be undefined if the
+repository allows unauthenticated commits (e.g., over WebDAV).
 
 =item date
 
@@ -75,7 +106,7 @@ The commit message from this revision.
 
 =back
 
-Alternatively, you can pass retrieve a hash containing the repository,
+Alternatively, you can pass C<retrieve()> a hash containing the repository,
 start and end revisions, and a callback function which will be called for
 each revision, like this:
 
@@ -144,13 +175,10 @@ sub _do_log {
   if ($@ || $FORCE_COMMAND_LINE_SVN) {
     # oops, we don't have the SVN perl libs installed, so instead we need
     # to fall back to using the command line client the old fashioned way
-    *_do_log = *_do_log_commandline;
+    goto &_do_log_commandline;
   } else {
-    *_do_log = *_do_log_bindings;
+    goto &_do_log_bindings;
   }
-
-  # all set up - crank it
-  goto &_do_log;
 }
 
 sub _do_log_bindings {
@@ -158,8 +186,16 @@ sub _do_log_bindings {
 
   my $r = SVN::Ra->new (url => $repos) or die "error opening RA layer: $!";
 
-  $r->get_log ([''], $start_rev, $end_rev, 0, 1, 0,
-               sub { $callback->(@_); });
+  if($start_rev eq 'HEAD') {
+    $start_rev = $r->get_latest_revnum();
+  }
+
+  if($end_rev eq 'HEAD') {
+    $end_rev = $r->get_latest_revnum();
+  }
+
+  $r->get_log (['/'], $start_rev, $end_rev, 0, 1, 0,
+               sub { _handle_log_bindings($callback, @_); });
 }
 
 sub _do_log_commandline {
@@ -197,8 +233,19 @@ sub _do_log_commandline {
         if (m/^$/) {
           $state = 'message';
         } else {
-          if (m/^\s+\w+ (.+)$/) {
-            $paths->{$1} = 1; # we only care about the filename anyway...
+          if (m/^\s+(\w+) (.+)$/) {
+	    my $action = $1;
+	    my $str    = $2;
+
+	    # If a copyfrom_{path,rev} is listed then include it,
+	    # otherwise just note the path and the action.
+	    if($str =~ /^(.*?) \(from (.*?):(\d+)\)$/) {
+	      $paths->{$1}{action} = $action;
+	      $paths->{$1}{copyfrom_path} = $2;
+	      $paths->{$1}{copyfrom_rev} = $3;
+	    } else {
+	      $paths->{$str}{action} = $action;
+	    }
           }
         }
       }
@@ -210,13 +257,45 @@ sub _do_log_commandline {
 
 my @fields = qw(paths revision author date message);
 
-sub _handle_log {
-  my $revs = shift;
-
+# Unpack the svn_log_changed_path_t parameters.  _do_log_command_line()
+# can call the user-supplied callback directly.  _do_log_bindings() can't,
+# because the list of changed paths (and what was changed) are implemented
+# as objects when using the bindings.
+#
+# This sub calls the relevant methods on the log_changed_path object, and
+# replaces the object reference with the methods' return values.  Then it
+# calls the user supplied callback.
+#
+# This way the user callbacks don't need to know whether we're using the
+# bindings or the command line client.
+sub _handle_log_bindings {
+  my $callback = shift;
   my %revision;
 
   @revision{@fields} = @_;
 
+  if(exists $revision{paths}) {
+    foreach my $path (keys %{$revision{paths}}) {
+      my $lcp = $revision{paths}{$path};
+
+      delete $revision{paths}{$path};
+
+      $revision{paths}{$path}{action} = $lcp->action();
+      if(defined $lcp->copyfrom_path()) {
+	$revision{paths}{$path}{copyfrom_path} = $lcp->copyfrom_path();
+	$revision{paths}{$path}{copyfrom_rev} = $lcp->copyfrom_rev();
+      }
+    }
+  }
+
+  $callback->(@revision{@fields});
+}
+
+sub _handle_log {
+  my $revs = shift;
+  my %revision;
+
+  @revision{@fields} = @_;
   push @$revs, \%revision;
 }
 

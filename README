@@ -19,12 +19,23 @@ VARIABLES
 
 FUNCTIONS
   retrieve
-      retrieve ('svn://host/repos', $start_rev, $end_rev);
+      retrieve('svn://host/repos', $start_rev, $end_rev);
 
     Retrieve one or more log messages from a repository. If a second
     revision is not specified, the revision passed will be retrieved,
     otherwise the range of revisions from $start_rev to $end_rev will be
     retrieved.
+
+    One or both of $start_rev and $end_rev may be given as "HEAD", meaning
+    the most recent (youngest) revision in the repository. To retrieve all
+    the log messages in the repository.
+
+      retrieve('svn://host/repos', 1, 'HEAD');
+
+    To do the same thing, but retrieve the log messages in reverse order
+    (i.e., most recent log message first):
+
+      retrieve('svn://host/repos, 'HEAD', 1);
 
     The revisions are returned as a reference to an array of hashes. Each
     hash contains the following keys:
@@ -34,14 +45,27 @@ FUNCTIONS
 
     paths
         A hashref indicating the paths modified by this revision. Each key
-        is the name of the path modified in this revision. The value is an
-        "svn_log_changed_path_t" object from SVN::Core, which allows you to
-        determine what happened to this path. See the description of the
-        "action()", "copyfrom_path()", and "copyfrom_rev()" methods in
-        SVN::Core.
+        is the name of the path modified in this revision. The value is a
+        reference to another hash, with the following possible keys.
+
+        action
+            The activity that happened to this path. One of "A", "M", or
+            "D", for "Added", "Modified", or "Deleted" respectively. This
+            key is always present.
+
+        copyfrom_path
+            If the action was "A" or "M" then this path may have been copied
+            from another path in the repository. If it was then this key
+            contains the path in the repository that the file was originally
+            copied from.
+
+        copyfrom_rev
+            If "copyfrom_path" is set then this value contains the revision
+            that the path in "copyfrom_path" was copied from.
 
     author
-        The author of the revision.
+        The author of the revision. May legitimately be undefined if the
+        repository allows unauthenticated commits (e.g., over WebDAV).
 
     date
         The date of this revision.
@@ -49,9 +73,9 @@ FUNCTIONS
     message
         The commit message from this revision.
 
-    Alternatively, you can pass retrieve a hash containing the repository,
-    start and end revisions, and a callback function which will be called
-    for each revision, like this:
+    Alternatively, you can pass "retrieve()" a hash containing the
+    repository, start and end revisions, and a callback function which will
+    be called for each revision, like this:
 
       retrieve ({ repository => "svn://svn.example.org/repos",
                   start => 1,

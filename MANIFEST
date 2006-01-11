@@ -8,6 +8,6 @@ META.yml
 README
 t/01compile.t
 t/02basics.t
-t/03commandline.t
+t/pod.t
 TODO
 SIGNATURE    Added here by Module::Build

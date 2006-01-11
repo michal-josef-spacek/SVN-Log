@@ -1,6 +1,6 @@
 ---
 name: SVN-Log
-version: 0.02
+version: 0.03
 author:
   - 'The current maintainer is Nik Clayton, <nikc@cpan.org>.'
   - |-
@@ -18,5 +18,5 @@ build_requires:
 provides:
   SVN::Log:
     file: lib/SVN/Log.pm
-    version: 0.02
+    version: 0.03
 generated_by: Module::Build version 0.2611
